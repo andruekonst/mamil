@@ -30,10 +30,13 @@ python setup.py install
 
 ## Usage example
 
+*Assembled example is presented in [MAMIL.ipynb](MAMIL.ipynb).*
+
 First, prepare a dataset and data loader for training.
 In the following example we use MNIST dataset:
 
 ```{python}
+import torch
 from mamil.models import MAMIL1D
 from mamil.utils import get_class_balancing_weights, make_test_plots
 from mamil.datasets import MnistBags
@@ -48,21 +51,23 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
+train_set = MnistBags(
+    target_number=args.target_number,
+    neighbour_number=args.neighbour_number,
+    mean_bag_length=args.mean_bag_length,
+    var_bag_length=args.var_bag_length,
+    num_bag=args.num_bags_train,
+    seed=args.seed,
+    train=True
+)
+
 train_weights = get_class_balancing_weights(train_set)
 train_sampler = data_utils.WeightedRandomSampler(train_weights, len(train_weights))
 train_shuffle = False  # no need to shuffle, because the sampler is used
 
 loader_kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 train_loader = data_utils.DataLoader(
-    MnistBags(
-        target_number=args.target_number,
-        neighbour_number=args.neighbour_number,
-        mean_bag_length=args.mean_bag_length,
-        var_bag_length=args.var_bag_length,
-        num_bag=args.num_bags_train,
-        seed=args.seed,
-        train=True
-    ),
+    train_set,
     batch_size=1,
     shuffle=train_shuffle,
     sampler=train_sampler,
@@ -117,4 +122,3 @@ make_test_plots(
     save_dir=Path('plots')
 )
 ```
-

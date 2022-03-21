@@ -6,8 +6,10 @@ from typing import NamedTuple, Optional
 
 
 class Args(NamedTuple):
-    train_number: int = 9
-    test_number: int = 3
+    target_number: int = 9
+    neighbour_number: int = 3
+    mean_bag_length: int = 8
+    var_bag_length: int = 2
     epochs: int = 20
     lr: float = 0.0005
     reg: float = 10e-5
@@ -56,7 +58,7 @@ def train_model(model, args: Args, train_loader,
     if need_init_weights:
         init_weights(model)
     
-    optimizer = nn.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, betas=(0.9, 0.999), weight_decay=args.reg)
 
     def train_step(epoch):
         model.train()
@@ -78,7 +80,7 @@ def train_model(model, args: Args, train_loader,
                 template_penalty = model.templates @ model.templates.T
                 template_penalty.fill_diagonal_(0.0)
                 norms = torch.norm(model.templates, dim=1)
-                normalization = norms @ norms.T
+                normalization = norms[:, None] @ norms[None, :]
                 normalization.fill_diagonal_(1.0)
                 template_penalty /= normalization
                 loss += 0.1 * torch.square(template_penalty).sum()
